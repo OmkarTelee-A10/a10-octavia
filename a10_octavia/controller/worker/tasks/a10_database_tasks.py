@@ -96,7 +96,8 @@ class CreteVthunderEntry(BaseDatabaseTask):
                                         project_id = loadbalancer.project_id,
                                         compute_id = compute_id, 
                                         topology = topology,
-                                        role = role)
+                                        role = role,
+                                        status = "ACTIVE")
         LOG.info("Successfully created vthunder entry in database.")
 
 class DeleteVthunderEntry(BaseDatabaseTask):
@@ -168,3 +169,16 @@ class MapLoadbalancerToAmphora(BaseDatabaseTask):
             return None
 
         return vthunder.id
+
+class MarkVthunderStatusInDB(BaseDatabaseTask):
+
+    def execute(self, vthunder, status):
+        try:
+            self.vthunder_repo.update(db_apis.get_session(),
+                                      vthunder.id,
+                                      status=status)
+        except (sqlalchemy.orm.exc.NoResultFound,
+                sqlalchemy.orm.exc.UnmappedInstanceError):
+            LOG.debug('No existing amphora health record to mark busy '
+                      'for amphora: %s, skipping.', vthunder_id)
+

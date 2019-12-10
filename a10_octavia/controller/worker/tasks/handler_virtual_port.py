@@ -121,7 +121,7 @@ class ListenersParent:
                                                 virtual_port_templates=virtual_port_templates,
                                                 **template_args)
                 
-                 LOG.info("Listener created successfully.")
+                LOG.info("Listener created successfully.")
         except Exception as e:
             print(str(e))
             LOG.info("Error occurred")

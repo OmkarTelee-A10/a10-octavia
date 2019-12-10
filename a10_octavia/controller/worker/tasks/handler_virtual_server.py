@@ -31,7 +31,7 @@ import json
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
-class LoadBalancerParent:
+class LoadBalancerParent(object):
 
     def set(self, set_method, loadbalancer_id, loadbalancer, vthunder):
         conf_templates = self.readConf('SLB', 'template_virtual_server')
@@ -82,9 +82,8 @@ class CreateVitualServerTask(BaseVThunderTask, LoadBalancerParent):
     """Task to create a virtual server in vthunder device."""
 
     def execute(self, loadbalancer_id, loadbalancer, vthunder):
-  
         c = self.client_factory(vthunder)          
-        status = LoadBalancerParent.set(c.slb.virtual_server.create,  loadbalancer_id, loadbalancer, vthunder)
+        status = LoadBalancerParent.set(self, c.slb.virtual_server.create,  loadbalancer_id, loadbalancer, vthunder)
         return status
         '''conf_templates = self.readConf('SLB', 'template_virtual_server')
         virtual_server_templates = {}
