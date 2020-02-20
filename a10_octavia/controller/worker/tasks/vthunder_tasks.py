@@ -182,10 +182,9 @@ class UnTagEthernetIfaces(BaseVThunderTask):
         c = self.client_factory(vthunder)
         vlan_client = acos_client.v30.vlan.Vlan(c)
         for subport in subports:
-            vlan_id = subport.segmentation_id
-            if not vlan_client.exists(subport.segmentation_id):
+            if vlan_client.exists(subport.segmentation_id):
                 vlan_client.delete(subport.segmentation_id)
-
+        
 
 class ConfigureVirtEthIfaces(BaseVThunderTask):
     """Task to configure VE interfaces"""
