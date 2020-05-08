@@ -138,7 +138,7 @@ class VThunder(BaseDataModel):
                  loadbalancer_id=None, project_id=None, compute_id=None,
                  topology="STANDALONE", role="MASTER", last_udp_update=None, status="ACTIVE",
                  created_at=datetime.utcnow(), updated_at=datetime.utcnow(), partition=None,
-                 vrrp_port_id=None, vrid_floating_ip=None):
+                 vrid_port_id=None, vrid_floating_ip=None):
         self.id = id
         self.vthunder_id = vthunder_id
         self.amphora_id = amphora_id
@@ -158,7 +158,7 @@ class VThunder(BaseDataModel):
         self.created_at = created_at
         self.updated_at = updated_at
         self.partition = partition
-        self.vrrp_port_id = vrrp_port_id
+        self.vrid_port_id = vrid_port_id
         self.vrid_floating_ip = vrid_floating_ip
 
 

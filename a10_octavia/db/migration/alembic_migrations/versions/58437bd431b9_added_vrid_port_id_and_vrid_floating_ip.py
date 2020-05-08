@@ -1,4 +1,4 @@
-"""Added vrrp port_id and vrid floating_ip
+"""Added vrid port_id and vrid floating_ip
 
 Revision ID: 58437bd431b9
 Revises: ed9c523cf8ee
@@ -17,10 +17,10 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('vthunders', sa.Column('vrrp_port_id', sa.String(36), nullable=True))
+    op.add_column('vthunders', sa.Column('vrid_port_id', sa.String(36), nullable=True))
     op.add_column('vthunders', sa.Column('vrid_floating_ip', sa.String(64), nullable=True))
 
 
 def downgrade():
     op.drop_column('vthunders', 'vrid_floating_ip')
-    op.drop_column('vthunders', 'vrrp_port_id')
+    op.drop_column('vthunders', 'vrid_port_id')
