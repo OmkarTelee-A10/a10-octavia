@@ -267,6 +267,11 @@ class MemberFlows(object):
         create_member_flow.add(a10_database_tasks.GetVThunderByLoadBalancer(
             requires=constants.LOADBALANCER,
             provides=a10constants.VTHUNDER))
+        # Suggestion to create a subflow based on global config and
+        # add below tasks to it 
+        create_member_flow.add(a10_network_tasks.HandleVRRPFloatingIPDelta(
+            requires=(a10constants.VTHUNDER, constants.MEMBER),
+            provides=a10constants.VRRP_PORT))
         create_member_flow.add(server_tasks.MemberCreate(
             requires=(constants.MEMBER, a10constants.VTHUNDER, constants.POOL)))
         create_member_flow.add(database_tasks.MarkMemberActiveInDB(

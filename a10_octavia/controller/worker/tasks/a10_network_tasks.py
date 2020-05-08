@@ -25,6 +25,8 @@ from octavia.controller.worker import task_utils
 from octavia.network import base
 from octavia.network import data_models as n_data_models
 
+from a10_octavia.controller.worker.tasks.decorators import axapi_client_decorator
+
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
@@ -658,3 +660,18 @@ class ApplyQosAmphora(BaseNetworkTask):
         except Exception as e:
             LOG.error('Failed to remove QoS policy: %s from port: %s due '
                       'to error: %s', orig_qos_id, amp_data.vrrp_port_id, e)
+
+class HandleVRRPFloatingIPDelta(BaseNetworkTask):
+    """Handle VRRP Floating IP port delta""":1
+
+    def execute(self, vthunder, member):
+        vrid = self.axapi_client.vrrpa.vrid.get(vthunder.vrid)
+        floating_ip = vrid['floating-ip']['ip-address-cfg'][0]['ip-address']
+        if floating_ip:
+            if floating_ip == vthunder.floating_ip:
+                return None
+            if floating_ip != vthunder.floating_ip:
+                self.network_driver.delete_port(vthunder.vrrp_port)
+        ip_address = None if vthunder.floating_ip == 'dhcp' else vthunder.floating_ip
+        fip_port = self.network_driver.create_port(member.subnet_id, fixed_ip=ip_address)
+        return fip_port
