@@ -19,19 +19,26 @@ try:
     from unittest import mock
 except ImportError:
     import mock
+
 from oslo_config import cfg
 from oslo_config import fixture as oslo_fixture
+from oslo_utils import uuidutils
 
-from octavia.common import data_models as o_data_models
+from octavia.common import data_models as c_data_models
+from octavia.network import data_models as n_data_models
 
 from a10_octavia.common.config_options import A10_GLOBAL_OPTS
 from a10_octavia.common import data_models
 from a10_octavia.controller.worker.tasks import a10_database_tasks as task
-from a10_octavia.tests.common import a10constants
+from a10_octavia.tests.common import a10constant
 from a10_octavia.tests.unit import base
 
-VTHUNDER = data_models.VThunder()
-LB = o_data_models.LoadBalancer(id=a10constants.MOCK_LOAD_BALANCER_ID)
+
+VTHUNDER_ID_1 = uuidutils.generate_uuid()
+VTHUNDER = data_models.VThunder(id=VTHUNDER_ID_1)
+FIXED_IP = n_data_models.FixedIP(ip_address='10.10.10.10')
+PORT = n_data_models.Port(id=uuidutils.generate_uuid(), fixed_ips=[FIXED_IP])
+LB = c_data_models.LoadBalancer(id=a10constants.MOCK_LOAD_BALANCER_ID)
 
 
 class TestA10DatabaseTasks(base.BaseTaskTestCase):
@@ -109,3 +116,13 @@ class TestA10DatabaseTasks(base.BaseTaskTestCase):
         mock_get_vthunder.vthunder_repo.get_vthunder_from_lb.return_value = mock_vthunder
         vthunder = mock_get_vthunder.execute(LB)
         self.assertEqual(vthunder.partition_name, a10constants.MOCK_CHILD_PROJECT_ID[:14])
+
+    def test_update_vthunder_vrrp_entry(self):
+        mock_vthunder_entry = task.UpdateVThunderVRRPEntry()
+        mock_vthunder_entry.vthunder_repo = mock.Mock()
+        mock_vthunder_entry.execute(VTHUNDER, PORT)
+        mock_vthunder_entry.vthunder_repo.update.assert_called_once_with(
+            mock.ANY,
+            VTHUNDER_ID_1,
+            vrrp_port_id=PORT.id,
+            vrid_floating_ip=PORT.fixed_ips[0].ip_address)
