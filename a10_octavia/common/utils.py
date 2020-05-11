@@ -106,3 +106,7 @@ def get_axapi_client(vthunder):
                                       vthunder.username, vthunder.password,
                                       timeout=30)
     return axapi_client
+
+
+def check_ip_in_subnet_range(ip, cidr):
+    pass
