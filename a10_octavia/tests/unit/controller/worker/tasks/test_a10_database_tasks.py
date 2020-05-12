@@ -56,6 +56,7 @@ class TestA10DatabaseTasks(base.BaseTaskTestCase):
         super(TestA10DatabaseTasks, self).tearDown()
         self.db_session.stop()
 
+<<<<<<< HEAD
     @mock.patch('a10_octavia.common.utils.get_parent_project',
                 return_value=a10constants.MOCK_PARENT_PROJECT_ID)
     def test_get_vthunder_by_loadbalancer_parent_partition_exists(self,
@@ -117,7 +118,7 @@ class TestA10DatabaseTasks(base.BaseTaskTestCase):
         vthunder = mock_get_vthunder.execute(LB)
         self.assertEqual(vthunder.partition_name, a10constants.MOCK_CHILD_PROJECT_ID[:14])
 
-    def test_update_vthunder_vrrp_entry(self):
+    def test_update_vthunder_vrrp_entry_with_port_info(self):
         mock_vthunder_entry = task.UpdateVThunderVRRPEntry()
         mock_vthunder_entry.vthunder_repo = mock.Mock()
         mock_vthunder_entry.execute(VTHUNDER, PORT)
