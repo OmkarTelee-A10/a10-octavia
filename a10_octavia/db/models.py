@@ -50,7 +50,7 @@ class VThunder(base_models.BASE):
     partition_name = sa.Column(sa.String(14), nullable=True)
     hierarchical_multitenancy = sa.Column(sa.Boolean(), default=False, nullable=True)
     vrid_port_id = sa.Column('vrid_port_id', sa.String(36), nullable=True)
-    vrid_floating_ip = sa.Column('vrid_floating_ip', sa.String(64), nullable=True)
+    vrid_floating_ip = sa.Column('vrid_floating_ip', sa.String(15), nullable=True)
 
     @classmethod
     def find_by_loadbalancer_id(cls, loadbalancer_id, db_session=None):
