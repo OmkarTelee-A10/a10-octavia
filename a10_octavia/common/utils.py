@@ -55,6 +55,9 @@ def validate_params(rack_info):
                                                   'username', 'password', 'device_name')):
             validate_ipv4(rack_info['ip_address'])
             rack_info = validate_partition(rack_info)
+            if rack_info['vrid_floating_ip']:
+                if rack_info['vrid_floating_ip'] != 'dhcp':
+                    validate_ipv4(rack_info['vrid_floating_ip'])
             return rack_info
     raise ConfigFileValueError('Please check your configuration. The params `project_id`, '
                                '`ip_address`, `username`, `password` and `device_name` '
