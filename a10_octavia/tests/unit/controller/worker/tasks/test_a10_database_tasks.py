@@ -33,7 +33,6 @@ from a10_octavia.controller.worker.tasks import a10_database_tasks as task
 from a10_octavia.tests.common import a10constants
 from a10_octavia.tests.unit import base
 
-
 VTHUNDER_ID_1 = uuidutils.generate_uuid()
 VTHUNDER = data_models.VThunder()
 VTHUNDER_1 = data_models.VThunder(id=VTHUNDER_ID_1)
