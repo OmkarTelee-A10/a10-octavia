@@ -30,7 +30,7 @@ from octavia.network import data_models as n_data_models
 from a10_octavia.common.config_options import A10_GLOBAL_OPTS
 from a10_octavia.common import data_models
 from a10_octavia.controller.worker.tasks import a10_database_tasks as task
-from a10_octavia.tests.common import a10constant
+from a10_octavia.tests.common import a10constants
 from a10_octavia.tests.unit import base
 
 
