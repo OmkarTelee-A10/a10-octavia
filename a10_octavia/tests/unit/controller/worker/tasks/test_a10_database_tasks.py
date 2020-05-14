@@ -42,6 +42,7 @@ LB = c_data_models.LoadBalancer(id=a10constants.MOCK_LOAD_BALANCER_ID)
 
 
 class TestA10DatabaseTasks(base.BaseTaskTestCase):
+
     def setUp(self):
         super(TestA10DatabaseTasks, self).setUp()
         imp.reload(task)
@@ -56,7 +57,6 @@ class TestA10DatabaseTasks(base.BaseTaskTestCase):
         super(TestA10DatabaseTasks, self).tearDown()
         self.db_session.stop()
 
-<<<<<<< HEAD
     @mock.patch('a10_octavia.common.utils.get_parent_project',
                 return_value=a10constants.MOCK_PARENT_PROJECT_ID)
     def test_get_vthunder_by_loadbalancer_parent_partition_exists(self,
