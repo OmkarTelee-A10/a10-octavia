@@ -14,8 +14,21 @@
 #    under the License.
 
 from octavia.common import exceptions
+from octavia.network import base
 from octavia.i18n import _
 
 
 class NoDatabaseURL(exceptions.OctaviaException):
     message = _("Must set db connection url in configuration file.")
+
+
+class PortCreationFailedException(base.NetworkException):
+    pass
+
+
+class DeallocateTrunkException(base.NetworkException):
+    pass
+
+
+class AllocateTrunkException(base.NetworkException):
+    pass
