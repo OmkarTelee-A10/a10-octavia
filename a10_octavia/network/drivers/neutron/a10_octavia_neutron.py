@@ -44,10 +44,9 @@ class A10OctaviaNeutronDriver(AllowedAddressPairsDriver):
             invoke_on_load=True
         ).driver
 
-
     def _port_to_parent_port(self, port):
         fixed_ips = [n_data_models.FixedIP(subnet_id=fixed_ip.get('subnet_id'),
-                                            ip_address=fixed_ip.get('ip_address'))
+                                           ip_address=fixed_ip.get('ip_address'))
                      for fixed_ip in port.get('fixed_ips', [])]
 
         trunk_id = port['trunk_details']['trunk_id'] if port.get('trunk_details') else None
@@ -55,22 +54,22 @@ class A10OctaviaNeutronDriver(AllowedAddressPairsDriver):
         subport_list = []
         if subports:
             subport_list = [data_models.Subport(segmentation_id=subport['segmentation_id'],
-                                                  port_id=subport['port_id'],
-                                                  segmentation_type=subport['segmentation_type'],
-                                                  mac_address=subport['mac_address'])
-                               for subport in subports]
+                                                port_id=subport['port_id'],
+                                                segmentation_type=subport['segmentation_type'],
+                                                mac_address=subport['mac_address'])
+                            for subport in subports]
         return data_models.ParentPort(id=port.get('id'),
-            name=port.get('name'),
-            device_id=port.get('device_id'),
-            device_owner=port.get('device_owner'),
-            mac_address=port.get('mac_address'),
-            network_id=port.get('network_id'),
-            status=port.get('status'),
-            project_id=port.get('project_id'),
-            admin_state_up=port.get('admin_state_up'),
-            fixed_ips=fixed_ips,
-            qos_policy_id=port.get('qos_policy_id'),
-            trunk_id=trunk_id, subports=subport_list)
+                                      name=port.get('name'),
+                                      device_id=port.get('device_id'),
+                                      device_owner=port.get('device_owner'),
+                                      mac_address=port.get('mac_address'),
+                                      network_id=port.get('network_id'),
+                                      status=port.get('status'),
+                                      project_id=port.get('project_id'),
+                                      admin_state_up=port.get('admin_state_up'),
+                                      fixed_ips=fixed_ips,
+                                      qos_policy_id=port.get('qos_policy_id'),
+                                      trunk_id=trunk_id, subports=subport_list)
 
     def _subport_model_to_dict(self, subport):
         return {'port_id': subport.port_id,
@@ -111,8 +110,8 @@ class A10OctaviaNeutronDriver(AllowedAddressPairsDriver):
         self._delete_security_group(vip, port)
 
     def allocate_trunk(self, parent_port_id):
-        payload = {"trunk": { "port_id": parent_port_id,
-                              "admin_state_up": "true"}}
+        payload = {"trunk": {"port_id": parent_port_id,
+                             "admin_state_up": "true"}}
         try:
             new_trunk = self.neutron_client.create_trunk(payload)
         except Exception:
@@ -176,7 +175,7 @@ class A10OctaviaNeutronDriver(AllowedAddressPairsDriver):
                              'network_id': network_id,
                              'admin_state_up': True,
                              'device_owner': OCTAVIA_OWNER,
-                             'fixed_ips' : [{'subnet_id': subnet_id}]}}
+                             'fixed_ips': [{'subnet_id': subnet_id}]}}
             if fixed_ip:
                 port['port']['fixed_ips'][0]['ip_address'] = fixed_ip
             new_port = self.neutron_client.create_port(port)

@@ -33,7 +33,7 @@ class ParentPort(network_data_models.Port):
         self.admin_state_up = admin_state_up
         self.fixed_ips = fixed_ips or []
         self.qos_policy_id = qos_policy_id
-        self.trunk_id = trunk_id 
+        self.trunk_id = trunk_id
         self.subports = subports or []
 
 
