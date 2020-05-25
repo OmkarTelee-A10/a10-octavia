@@ -20,11 +20,11 @@ from taskflow import task
 from taskflow.types import failure
 
 from octavia.common import constants
-from octavia.common import utils
 from octavia.controller.worker import task_utils
 from octavia.network import base
 from octavia.network import data_models as n_data_models
 
+from a10_octavia.common import exceptions
 from a10_octavia.common import utils as a10_utils
 from a10_octavia.controller.worker.tasks.decorators import axapi_client_decorator
 
@@ -43,7 +43,7 @@ class BaseNetworkTask(task.Task):
     @property
     def network_driver(self):
         if self._network_driver is None:
-            self._network_driver = utils.get_network_driver()
+            self._network_driver = a10_utils.get_network_driver()
         return self._network_driver
 
 
@@ -672,31 +672,45 @@ class HandleVRRPFloatingIPDelta(BaseNetworkTask):
 
     @axapi_client_decorator
     def execute(self, vthunder, member):
-        floating_ip = vthunder.vrrp_floating_ip
+        floating_ip = vthunder.vrid_floating_ip
 
         if floating_ip:
+            subnet = self.network_driver.get_subnet(member.subnet_id)
+
             if floating_ip == 'dhcp':
-                self.fip_port = self.network_driver.create_port(member.subnet_id)
+                self.fip_port = self.network_driver.create_port(subnet.network_id,
+                                                                member.subnet_id)
             else:
-                # TODO(@omkartelee-A10) change get_net_info_from_subnet()
-                # subnet_ip, subnet_mask = get_net_info_from_subnet(subnet_id)
-                subnet_cidr = self.network_driver.get_subnet(member.subnet_id).cidr
-                if not a10_utils.check_ip_in_subnet_range(floating_ip, subnet_cidr):
+                subnet_ip, subnet_mask = a10_utils.get_net_info_from_cidr(subnet.cidr)
+                if not a10_utils.check_ip_in_subnet_range(floating_ip, subnet_ip, subnet_mask):
                     LOG.exception("Invalid VRID floating IP. IP out of subnet range: %s",
                                   floating_ip)
-                    raise
+                    raise exceptions.VRIDIPNotInSubentRangeError
 
-                vrid = self.axapi_client.vrrpa.vrid.get(0)
-                vrid_ip = vrid['floating-ip']['ip-address-cfg'][0]['ip-address']
+                vrid = self.axapi_client.vrrpa.get(0)
+                if 'floating-ip' not in vrid['vrid']:
+                    vrid_ip = None
+                else:
+                    if vthunder.partition_name == "shared":
+                        vrid_ip = vrid['vrid']['floating-ip']['ip-address-cfg'][0]['ip-address']
+                    else:
+                        vrid_ip = vrid['vrid']['floating-ip']['ip-address-part-cfg'
+                                                              ][0]['ip-address-partition']
                 if floating_ip != vrid_ip:
-                    self.fip_port = self.network_driver.create_port(member.subnet_id,
+                    self.fip_port = self.network_driver.create_port(subnet.network_id,
+                                                                    member.subnet_id,
                                                                     fixed_ip=floating_ip)
+                    # Delete old port after new one created successfully for atomicity
+                    if vrid_ip:
+                        self.network_driver.delete_port_by_ip(subnet.network_id,
+                                                              member.subnet_id,
+                                                              fixed_ip=vrid_ip)
 
             if self.fip_port:
-                self.axapi_client.vrrpa.vrid.update(0, self.fip_port.fixed_ips[0].ip_address)
+                self.update_device_vrid_fip(self.fip_port.fixed_ips[0].ip_address, vthunder)
 
-        if vthunder.vrrp_port_id and (self.fip_port or not floating_ip):
-            self.network_driver.delete_port(vthunder.vrrp_port_id)
+        if vthunder.vrid_port_id and (self.fip_port or not floating_ip):
+            self.network_driver.delete_port(vthunder.vrid_port_id)
 
         return self.fip_port
 
@@ -709,6 +723,12 @@ class HandleVRRPFloatingIPDelta(BaseNetworkTask):
         if self.fip_port:
             try:
                 self.network_driver.delete_port(self.fip_port.id)
-                self.axapi_client.vrrpa.vrid.update(0, vthunder.vrrp_floating_ip)
+                self.axapi_client.vrrpa.update(0, vthunder.vrid_floating_ip)
             except Exception as e:
                 LOG.exception("Failed to revert VRRP floating IP delta task: %s", str(e))
+
+    def update_device_vrid_fip(self, floating_ip, vthunder):
+        if vthunder.partition_name == "shared":
+            self.axapi_client.vrrpa.update(0, floating_ip=floating_ip)
+        else:
+            self.axapi_client.vrrpa.update(0, floating_ip=floating_ip, is_partition=True)

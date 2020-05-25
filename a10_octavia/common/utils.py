@@ -72,7 +72,7 @@ def validate_params(hardware_info):
                                                       'username', 'password', 'device_name')):
             validate_ipv4(hardware_info['ip_address'])
             hardware_info = validate_partition(hardware_info)
-            if hardware_info['vrid_floating_ip']:
+            if 'vrid_floating_ip' in hardware_info:
                 if hardware_info['vrid_floating_ip'] != 'dhcp':
                     validate_ipv4(hardware_info['vrid_floating_ip'])
             return hardware_info

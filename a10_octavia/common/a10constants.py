@@ -44,6 +44,8 @@ HTTP_TYPE = ['HTTP', 'HTTPS']
 PERS_TYPE = ['cookie_persistence', 'src_ip_persistence']
 NO_DEST_NAT_SUPPORTED_PROTOCOL = ['tcp', 'udp']
 SHARED_PARTITION = 'shared'
+VRRP_PORT = 'vrrp_port'
+
 # Taskflow flow and task names
 
 BACKUP_AMPHORA_PLUG = 'backup-amphora-plug'

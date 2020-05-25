@@ -135,13 +135,12 @@ class A10OctaviaNeutronDriver(allowed_address_pairs.AllowedAddressPairsDriver):
         new_port = None
         if not subnet_id:
             subnet_id = self.neutron_client.get_network(network_id).subnets[0]
-        fixed_ip = {'subnet_id': subnet_id}
         try:
             port = {'port': {'name': 'octavia-port-' + network_id,
                              'network_id': network_id,
                              'admin_state_up': True,
                              'device_owner': OCTAVIA_OWNER,
-                             'fixed_ips': [fixed_ip]}}
+                             'fixed_ips': [{'subnet_id': subnet_id}]}}
             if fixed_ip:
                 port['port']['fixed_ips'][0]['ip_address'] = fixed_ip
             new_port = self.neutron_client.create_port(port)
@@ -157,4 +156,17 @@ class A10OctaviaNeutronDriver(allowed_address_pairs.AllowedAddressPairsDriver):
             self.neutron_client.delete_port(port_id)
         except Exception:
             message = "Error deleting port: {0}".format(port_id)
+            LOG.exception(message)
+
+    def delete_port_by_ip(self, network_id, subnet_id, fixed_ip):
+        # TODO @omkartelee-A10 - explore api filters
+        try:
+            ports = self.neutron_client.list_ports(network_id=network_id)
+            for port in ports['ports']:
+                if 'fixed_ips' in port and len(port['fixed_ips']) > 0:
+                    if port['fixed_ips'][0]['ip_address'] == fixed_ip:
+                        self.neutron_client.delete_port(port['id'])
+                        break
+        except Exception:
+            message = "Error deleting port with IP: {0}".format(fixed_ip)
             LOG.exception(message)

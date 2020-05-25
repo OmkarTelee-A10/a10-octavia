@@ -122,7 +122,7 @@ class GetVThunderByLoadBalancer(BaseDatabaseTask):
         vthunder = self.vthunder_repo.get_vthunder_from_lb(
             db_apis.get_session(), loadbalancer_id)
         if vthunder is None:
-            raise
+            return None
         if (vthunder.undercloud and vthunder.hierarchical_multitenancy and
                 CONF.a10_global.use_parent_partition):
             parent_project_id = utils.get_parent_project(vthunder.project_id)
@@ -213,6 +213,13 @@ class CreateRackVthunderEntry(BaseDatabaseTask):
             partition_name = vthunder_config.project_id[:14]
         else:
             partition_name = vthunder_config.partition_name
+
+        vrid_floating_ip = None
+        if vthunder_config.vrid_floating_ip:
+            vrid_floating_ip = vthunder_config.vrid_floating_ip
+        else:
+            vrid_floating_ip = CONF.a10_global.vrid_floating_ip
+
         try:
             self.vthunder_repo.create(db_apis.get_session(),
                                       vthunder_id=uuidutils.generate_uuid(),
@@ -231,7 +238,8 @@ class CreateRackVthunderEntry(BaseDatabaseTask):
                                       created_at=datetime.utcnow(),
                                       updated_at=datetime.utcnow(),
                                       partition_name=partition_name,
-                                      hierarchical_multitenancy=hierarchical_multitenancy)
+                                      hierarchical_multitenancy=hierarchical_multitenancy,
+                                      vrid_floating_ip=vrid_floating_ip)
             LOG.info("Successfully created vthunder entry in database.")
         except Exception as e:
             LOG.error('Failed to create vThunder entry in db for load balancer: %s.',
@@ -308,14 +316,23 @@ class CreateSpareVThunderEntry(BaseDatabaseTask):
 
 
 class UpdateVThunderVRRPEntry(BaseDatabaseTask):
-    def execute(self, vthunder, port):
-        if port:
+    def execute(self, vthunder, vrrp_port):
+        if vrrp_port:
+            vthunders = None
             try:
-                vthunder = self.vthunder_repo.update(
+                vthunders = self.vthunder_repo.get_all(
                     db_apis.get_session(),
-                    vthunder.id,
-                    vrrp_port_id=port.id,
-                    vrid_floating_ip=port.fixed_ips[0].ip_address)
-                LOG.info("Updated vthunder entry in db with vrrp information")
+                    project_id=vthunder.project_id,
+                    status='ACTIVE')
+                LOG.debug('Fetched active vthunders for project: %s', vthunder.project_id)
             except Exception as e:
-                LOG.exception("Failed UpdateVThunderVRRPEntry: %s", str(e))
+                LOG.exception("Failed to get sibling SLB entries to update VRID: %s", str(e))
+
+            try:
+                for vthunder in vthunders[0]:
+                    self.vthunder_repo.update(db_apis.get_session(), vthunder.id,
+                                              vrid_port_id=vrrp_port.id,
+                                              vrid_floating_ip=vrrp_port.fixed_ips[0].ip_address)
+                LOG.info("Updated vthunder entry in db with VRRP VRID information.")
+            except Exception as e:
+                LOG.exception("Failed to update db with VRRP VRID information: %s", str(e))
