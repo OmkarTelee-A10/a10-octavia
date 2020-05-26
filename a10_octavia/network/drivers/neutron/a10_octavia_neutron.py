@@ -159,7 +159,7 @@ class A10OctaviaNeutronDriver(allowed_address_pairs.AllowedAddressPairsDriver):
             LOG.exception(message)
 
     def delete_port_by_ip(self, network_id, subnet_id, fixed_ip):
-        # TODO @omkartelee-A10 - explore api filters
+        # TODO(omkartelee-A10) - explore api filters
         try:
             ports = self.neutron_client.list_ports(network_id=network_id)
             for port in ports['ports']:

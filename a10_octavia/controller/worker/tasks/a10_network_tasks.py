@@ -751,4 +751,4 @@ class DeleteMemberVRIDPort(BaseNetworkTask):
                 self.axapi_client.vrrpa.delete(0)
                 LOG.info("VRID port : %s deleted", vthunder.vrid_port_id)
             except Exception as e:
-                LOG.exception("Failed to delete vrid port : %s", vthunder.vrid_port_id)
+                LOG.exception("Failed to delete vrid port : %s", str(e))
