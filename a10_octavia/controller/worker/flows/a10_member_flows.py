@@ -103,6 +103,10 @@ class MemberFlows(object):
         :returns: The flow for deleting a member
         """
         delete_member_flow = linear_flow.Flow(constants.DELETE_MEMBER_FLOW)
+        delete_member_flow.add(a10_database_tasks.
+                               CountMembersInProject(
+                                   requires=constants.MEMBER,
+                                   provides=a10constants.COUNT))
         delete_member_flow.add(lifecycle_tasks.MemberToErrorOnRevertTask(
             requires=[constants.MEMBER,
                       constants.LISTENERS,
@@ -128,7 +132,8 @@ class MemberFlows(object):
                                MarkLBAndListenersActiveInDB(
                                    requires=[constants.LOADBALANCER,
                                              constants.LISTENERS]))
-
+        delete_member_flow.add(a10_network_tasks.DeleteMemberVRIDPort(
+            requires=[a10constants.VTHUNDER, a10constants.COUNT]))
         return delete_member_flow
 
     def get_update_member_flow(self):

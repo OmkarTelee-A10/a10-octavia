@@ -41,6 +41,7 @@ class BaseDatabaseTask(task.Task):
         self.repos = repo.Repositories()
         self.vthunder_repo = a10_repo.VThunderRepository()
         self.amphora_repo = repo.AmphoraRepository()
+        self.member_repos = a10_repo.MemberRepository()
         super(BaseDatabaseTask, self).__init__(**kwargs)
 
 
@@ -336,3 +337,13 @@ class UpdateVThunderVRRPEntry(BaseDatabaseTask):
                 LOG.info("Updated vthunder entry in db with VRRP VRID information.")
             except Exception as e:
                 LOG.exception("Failed to update db with VRRP VRID information: %s", str(e))
+
+
+class CountMembersInProject(BaseDatabaseTask):
+    def execute(self, member):
+        try:
+            return self.member_repos.get_member_count(
+                db_apis.get_session(),
+                project_id=member.project_id)
+        except Exception as e:
+            LOG.exception("Failed to get count of members in given project: %s", str(e))

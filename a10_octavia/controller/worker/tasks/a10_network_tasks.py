@@ -676,6 +676,7 @@ class HandleVRRPFloatingIPDelta(BaseNetworkTask):
 
         if floating_ip:
             subnet = self.network_driver.get_subnet(member.subnet_id)
+            vrid_ip = self.get_device_vrid_fip(vthunder)
 
             if floating_ip == 'dhcp':
                 self.fip_port = self.network_driver.create_port(subnet.network_id,
@@ -687,27 +688,19 @@ class HandleVRRPFloatingIPDelta(BaseNetworkTask):
                                   floating_ip)
                     raise exceptions.VRIDIPNotInSubentRangeError
 
-                vrid = self.axapi_client.vrrpa.get(0)
-                if 'floating-ip' not in vrid['vrid']:
-                    vrid_ip = None
-                else:
-                    if vthunder.partition_name == "shared":
-                        vrid_ip = vrid['vrid']['floating-ip']['ip-address-cfg'][0]['ip-address']
-                    else:
-                        vrid_ip = vrid['vrid']['floating-ip']['ip-address-part-cfg'
-                                                              ][0]['ip-address-partition']
                 if floating_ip != vrid_ip:
                     self.fip_port = self.network_driver.create_port(subnet.network_id,
                                                                     member.subnet_id,
                                                                     fixed_ip=floating_ip)
-                    # Delete old port after new one created successfully for atomicity
-                    if vrid_ip:
-                        self.network_driver.delete_port_by_ip(subnet.network_id,
-                                                              member.subnet_id,
-                                                              fixed_ip=vrid_ip)
 
             if self.fip_port:
                 self.update_device_vrid_fip(self.fip_port.fixed_ips[0].ip_address, vthunder)
+
+                # Delete old port after new one created successfully for atomicity
+                if vrid_ip:
+                    self.network_driver.delete_port_by_ip(subnet.network_id,
+                                                          member.subnet_id,
+                                                          fixed_ip=vrid_ip)
 
         if vthunder.vrid_port_id and (self.fip_port or not floating_ip):
             self.network_driver.delete_port(vthunder.vrid_port_id)
@@ -732,3 +725,30 @@ class HandleVRRPFloatingIPDelta(BaseNetworkTask):
             self.axapi_client.vrrpa.update(0, floating_ip=floating_ip)
         else:
             self.axapi_client.vrrpa.update(0, floating_ip=floating_ip, is_partition=True)
+
+    def get_device_vrid_fip(self, vthunder):
+        vrid = self.axapi_client.vrrpa.get(0)
+
+        if 'floating-ip' not in vrid['vrid']:
+            vrid_ip = None
+        else:
+            if vthunder.partition_name == "shared":
+                vrid_ip = vrid['vrid']['floating-ip']['ip-address-cfg'][0]['ip-address']
+            else:
+                vrid_ip = vrid['vrid']['floating-ip']['ip-address-part-cfg'
+                                                      ][0]['ip-address-partition']
+        return vrid_ip
+
+
+class DeleteMemberVRIDPort(BaseNetworkTask):
+    """Delete VRID Port if the last member associated with it is deleted
+    """
+    @axapi_client_decorator
+    def execute(self, vthunder, count):
+        if vthunder.vrid_port_id and count == 1:
+            try:
+                self.network_driver.delete_port(vthunder.vrid_port_id)
+                self.axapi_client.vrrpa.delete(0)
+                LOG.info("VRID port : %s deleted", vthunder.vrid_port_id)
+            except Exception as e:
+                LOG.exception("Failed to delete vrid port : %s", vthunder.vrid_port_id)
