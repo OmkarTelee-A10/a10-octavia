@@ -25,7 +25,7 @@ DEFAULT = {
     'template_virtual_port': None,
     'template_tcp': None,
     'template_policy': None,
-    'autosnat': True,
+    'autosnat': None,
     'conn_limit': None,
     'template_http': None,
     'templates': None,
