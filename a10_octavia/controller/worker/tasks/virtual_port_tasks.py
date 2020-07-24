@@ -81,6 +81,7 @@ class ListenersParent(object):
             LOG.warning("'no_dest_nat' is not allowed for HTTP," +
                         "HTTPS or TERMINATED_HTTPS listener.")
             no_dest_nat = False
+        import rpdb; rpdb.set_trace()
 
         set_method(loadbalancer.id, listener.id,
                    listener.protocol,
@@ -114,7 +115,7 @@ class ListenerCreate(ListenersParent, task.Task):
     def revert(self, loadbalancer, listener, vthunder, *args, **kwargs):
         LOG.warning("Reverting creation of listener: %s", listener.id)
         listener.protocol = openstack_mappings.virtual_port_protocol(self.axapi_client,
-                                                                     listener.protocol)
+                                                                     listener.protocol.upper())
         try:
             self.axapi_client.slb.virtual_server.vport.delete(
                 loadbalancer.id, listener.id, listener.protocol,
